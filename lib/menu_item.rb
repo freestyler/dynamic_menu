@@ -19,7 +19,7 @@ class MenuItem
   end
 
   def remove(*args)
-    @items.delete_if {|item| item.item_hash.include?(args.first) }
+    @items.delete_if {|item| item.item_hash.include_hash?(args.first) }
   end
 
   def clear
