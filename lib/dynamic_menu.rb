@@ -1,14 +1,13 @@
-#/usr/bin/env ruby
-
 require 'core_ext'
 require 'menu_item'
+require 'render_menu_helper'
 
 class DynamicMenu < MenuItem
 
   def initialize(*args, &block)
     @items = []
     @parent = nil
-    self.instance_eval(&block) if block
+    block.call(self) if block_given?
   end
 
 end
@@ -31,7 +30,7 @@ class Item < MenuItem
       self.instance_variable_set("@#{key.to_s}".to_sym, value)
     end
 
-    self.instance_eval(&block) if block
+    block.call(self) if block_given?
 
   end
 
@@ -44,25 +43,3 @@ class Item < MenuItem
   end
 
 end
-
-
-a = DynamicMenu.new do
-
-  add 'Home', '/'
-  add 'About us', '/about_us', :target_completion => false do
-    add 'Staff', '/about_us/stuff'
-    add 'Experts', '/experts'
-    add 'Contacts'
-  end
-  add 'Research area'
-  add 'Projects'
-  add 'Publications', '/publications', :target_completion => true do
-    add 'Analyses', '/analyses'
-    add 'Studies', '/studies'
-    add 'Roundtable', '/roundtable'
-    add 'Book Review', '/book_review'
-  end
-
-end
-
-# puts a.inspect
