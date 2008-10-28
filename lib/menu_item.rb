@@ -35,7 +35,11 @@ class MenuItem
   end
 
   def enabled?
-    @enabled ? true : false
+    @enabled
+  end
+
+  def active?
+    @active
   end
 
   protected
@@ -55,6 +59,22 @@ class MenuItem
     result_ary.include?(true)
   end
 
+  def get_active(active)
+    result_ary  = []
+    temp_ary    = []
+    if active.is_a?(Hash)
+      result_ary << active_helper(active)
+    elsif active.is_a?(Array)
+      active.each do |active_item|
+        if active_item.is_a?(Hash)
+          result_ary << active_helper(active_item)
+        end
+      end
+    end
+    result_ary.include?(true)
+  end
+
+
   private
 
   def enabled_helper(enabled)
@@ -69,5 +89,19 @@ class MenuItem
     end
     !temp_ary.include?(false)
   end
+
+  def active_helper(active)
+    raise 'No hash argument' unless active.is_a?(Hash)
+    temp_ary = []
+    active.each do |key, value|
+      temp_ary << if value.is_a?(Array)
+                    value.map {|v| self.instance_variable_get("@#{key.to_s}".to_sym).to_s == v.to_s}.include?(true)
+      else
+        self.instance_variable_get("@#{key.to_s}".to_sym).to_s == value.to_s
+      end
+    end
+    !temp_ary.include?(false)
+  end
+
 
 end

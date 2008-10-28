@@ -7,8 +7,9 @@ class DynamicMenu < MenuItem
   def initialize(*args, &block)
     options     = args.last.is_a?(Hash) ? args.pop : {}
     
-    @items      = []
-    @parent     = nil
+    @items        = []
+    @parent       = nil
+    @html_options = {}
     
     options.each do |key, value|
       self.instance_variable_set("@#{key.to_s}".to_sym, value)
@@ -47,6 +48,17 @@ class Item < MenuItem
                           else
                             true
                           end
+
+    @active            =  if active = options.delete(:active)
+                            active if active.is_a?(TrueClass) or active.is_a?(FalseClass)
+                            get_active(active) if active.is_a?(Hash) or active.is_a?(Array)
+                          else
+                            false
+                          end
+
+    if @active
+      self[:html_options][:class].blank? ? (self[:html_options][:class] = (@active_class || 'active')) : (self[:html_options][:class] += ' ' + (@active_class || 'active'))
+    end
 
     block.call(self) if block_given?
 
