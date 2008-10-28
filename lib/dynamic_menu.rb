@@ -5,8 +5,11 @@ require 'render_menu_helper'
 class DynamicMenu < MenuItem
 
   def initialize(*args, &block)
-    @items = []
-    @parent = nil
+    options     = args.last.is_a?(Hash) ? args.pop : {}
+    @controller = options[:controller]
+    @action     = options[:action]
+    @items      = []
+    @parent     = nil
     block.call(self) if block_given?
   end
 
@@ -14,17 +17,24 @@ end
 
 class Item < MenuItem
 
-  def initialize(*args, &block)
+  def initialize(_parent, *args, &block)
 
-    @items  = []
-    @parent = nil
 
     options = args.last.is_a?(Hash) ? args.pop : {}
 
-    @name         = options[:name] || args[0]
-    @target_completion = options[:target_completion].to_s == "true" ? true : false
-    @target       = options[:target] || args[1]
-    @html_options = options.delete(:html_options) || {}
+    @items              = []
+    @name               = options[:name] || args[0]
+    @target             = options[:target] || args[1]
+    @parent             = _parent
+    @controller         = options[:controller] || @parent.controller
+    @action             = options[:action] || @parent.action
+    @enabled            = if enabled = options.delete(:enabled)
+                            enabled if enabled.is_a?(TrueClass) or enabled.is_a?(FalseClass)
+                            get_enabled(enabled) if enabled.is_a?(Hash) or enabled.is_a?(Array)
+                          else
+                            true
+                          end
+    @html_options       = options[:html_options] || {}
 
     options.each do |key, value|
       self.instance_variable_set("@#{key.to_s}".to_sym, value)

@@ -8,7 +8,7 @@ module ActionView
       
       content_tag model.first do
         dynamic_menu.items.map do |menu_item|
-          content_tag model.last, (link_to menu_item[:name], menu_item[:target]) + (menu_item.items.empty? ? '' : render_menu(menu_item, *args))
+          content_tag model.last, (link_to menu_item.name, menu_item.target) + (menu_item.items.empty? ? '' : render_menu(menu_item, *args)) if menu_item.enabled? if menu_item.enabled?
         end
       end
     end
