@@ -42,6 +42,10 @@ class MenuItem
     @active
   end
 
+  def active_item
+    self.items.find { |item| item.active? }
+  end
+
   protected
 
   def get_enabled(enabled)
