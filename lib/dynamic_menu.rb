@@ -37,6 +37,7 @@ class Item < MenuItem
     
     @name               = options.delete(:name) || args[0]
     @target             = options.delete(:target) || args[1]
+    @html_options       = {}
 
     options.each do |key, value|
       self.instance_variable_set("@#{key.to_s}".to_sym, value)
