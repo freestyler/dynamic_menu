@@ -47,7 +47,7 @@ class MenuItem
   end
 
   def position
-    self.parent.items.index(self)
+    self[:parent].items.index(self)
   end
 
   def next
