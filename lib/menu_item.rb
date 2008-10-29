@@ -46,6 +46,22 @@ class MenuItem
     self.items.find { |item| item.active? }
   end
 
+  def position
+    self.parent.items.index(self)
+  end
+
+  def next
+    return nil if self.parent.items.last == self
+    self.parent.items.at(self.position + 1)
+  end
+
+  def previous
+    return nil if self.parent.items.first == self
+    self.parent.items.at(self.position - 1)
+  end
+
+  alias :prev :previous
+
   protected
 
   def get_enabled(enabled)

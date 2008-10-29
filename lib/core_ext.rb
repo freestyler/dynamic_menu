@@ -6,5 +6,3 @@ class Hash
     true
   end
 end
-
-
