@@ -13,16 +13,8 @@ class MenuItem
   end
 
   def add(*args, &block)
-    item = Item.new(self, *args, &block)
+    item = DynamicMenu.new(self, *args, &block)
     @items.push item
-  end
-
-  def remove(*args)
-    @items.delete_if {|item| item.item_hash.include_hash?(args.first) }
-  end
-
-  def clear
-    @items.clear
   end
 
   def level
@@ -64,64 +56,42 @@ class MenuItem
 
   protected
 
-  def get_enabled(enabled)
+  def get_property(property)
     result_ary  = []
     temp_ary    = []
-    if enabled.is_a?(Hash)
-      result_ary << enabled_helper(enabled)
-    elsif enabled.is_a?(Array)
-      enabled.each do |enabled_item|
-        if enabled_item.is_a?(Hash)
-          result_ary << enabled_helper(enabled_item)
+    if property.is_a?(Hash)
+      result_ary << property_helper(property)
+    elsif property.is_a?(Array)
+      property.each do |property_item|
+        if property_item.is_a?(Hash)
+          result_ary << property_helper(property_item)
         end
       end
     end
     result_ary.include?(true)
   end
 
-  def get_active(active)
-    result_ary  = []
-    temp_ary    = []
-    if active.is_a?(Hash)
-      result_ary << active_helper(active)
-    elsif active.is_a?(Array)
-      active.each do |active_item|
-        if active_item.is_a?(Hash)
-          result_ary << active_helper(active_item)
-        end
-      end
-    end
-    result_ary.include?(true)
+  def parents
+    ([] << self[:parent] << (self[:parent] ? self[:parent].parents : nil)).flatten.compact
   end
 
+  def self_with_parents
+    [self, self.parents].flatten.compact
+  end
 
   private
 
-  def enabled_helper(enabled)
-    raise 'No hash argument' unless enabled.is_a?(Hash)
+  def property_helper(property)
+    raise 'No hash argument' unless property.is_a?(Hash)
     temp_ary = []
-    enabled.each do |key, value|
+    property.each do |key, value|
       temp_ary << if value.is_a?(Array)
-                    value.map {|v| self.instance_variable_get("@#{key.to_s}".to_sym).to_s == v.to_s}.include?(true)
+                    value.map {|v| self.self_with_parents.map { |item| item[key.to_sym].to_s == v.to_s } }.flatten.compact.include?(true)
       else
-        self.instance_variable_get("@#{key.to_s}".to_sym).to_s == value.to_s
+        self.self_with_parents.map { |item| item[key.to_sym].to_s == value.to_s }.include?(true)
       end
     end
     !temp_ary.include?(false)
   end
-
-  def active_helper(active)
-    raise 'No hash argument' unless active.is_a?(Hash)
-    temp_ary = []
-    active.each do |key, value|
-      temp_ary << if value.is_a?(Array)
-                    value.map {|v| self.instance_variable_get("@#{key.to_s}".to_sym).to_s == v.to_s}.include?(true)
-      else
-        self.instance_variable_get("@#{key.to_s}".to_sym).to_s == value.to_s
-      end
-    end
-    !temp_ary.include?(false)
-  end
-
 
 end
