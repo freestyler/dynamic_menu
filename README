@@ -1,13 +1,90 @@
 DynamicMenu
 ===========
 
-Introduction goes here.
+DynamicMenu is a scalable menu builder plugin for Ruby On Rails.
+This plugin supported for menu items parametering in running time; examination with (active?, enabled?, etc...) helper methods; parent menu item properties inheriting.
+
+Before use it see the examples below!
 
 
 Example
 =======
 
-Example goes here.
+Simple
+------
 
+in application.rb
 
-Copyright (c) 2008 [name of plugin creator], released under the MIT license
+  @main_menu = DynamicMenu.new do |main_menu|
+    main_menu.add 'Main Page', '/'
+    main_menu.add 'Services', services_path do |services|
+      services.add 'Repairing', services_path(13)
+      services.add 'Washing', services_path(26)
+    end
+    main_menu.add 'About', about_path
+  end
+
+render with default render_menu method in view
+
+  render_menu(@main_menu)
+
+Result:
+-------
+
+  <ul>
+    <li><a href="/">Main Page</a></li>
+    <li>
+      <a href="/services">Services</a>
+      <ul>
+        <li><a href="/services/13">Repairing</a></li>
+        <li><a href="/services/26">Washing</a></li>
+      </ul>
+    </li>
+    <li><a href="/about">About</a></li>
+  </ul>
+
+Advanced
+--------
+
+in application.rb
+
+  @main_menu = DynamicMenu.new :c => self.controller_name, :a => self.action_name, :active_class => 'aktiv' do |main_menu|
+    main_menu.add 'Products', '/', :enabled => {:c => :products}, :active => {:c => :products} do |products|
+      products.add 'New', new_product_path, :enabled => logged_in?, :active => {:c => :products, :a => :new}, :info => 'Create a new product'
+      products.add 'Edit', edit_product_path(params[:id]), :enabled => (logged_in? and current_user.updater?), :active => {:c => :products, :a => :edit}, :info => 'Edit product'
+    end
+    main_menu.add 'Search', search_path, :active => {:c => :search}
+    main_menu.add 'Sellings', sellings_path, :active => {:c => :sellings}, :selling_id => params[:id] do |sellings|
+      sellings.add 'New selling', new_selling_path, :enabled => {:c => :sellings, :a => [:index, :show]}, :active => {:c => :sellings, :a => :new}
+      sellings.add 'Edit selling', edit_selling_path(params[:id]), :enabled => [{:c => :sellings, :a => :show, :selling_id => 3}, {:c => :sellings, :a => :edit, :sellling_id => 6}], :active => [{:c => :sellings, :action => :show, :selling_id => 3}, {:c => :sellings, :action => :edit, :selling_id => 6}]
+    end
+  end
+
+Result:
+-------
+
+  Controller: products
+  Action:     new
+
+  and user logged in and updater?
+
+  <ul>
+    <li class="aktiv">
+      <a href="/">Products</a>
+      <ul>
+        <li class="aktiv"><a href="/products/new">New</a></li>
+        <li><a href="/products/edit/id">Edit</a></li>
+      </ul>
+    </li>
+    <li><a href="/search">Search</a></li>
+    <li><a href="/sellings">Sellings</a></li>
+  </ul>
+
+  and @main_menu.active_item.active_item[:info] #=> 'Create a new product'
+
+  Controller: sellings
+  Action:     show
+  
+  Test it. :)
+
+Copyright (c) 2008 [Tamás Bene], released under the MIT license
