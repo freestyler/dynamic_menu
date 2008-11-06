@@ -1,6 +1,6 @@
 module MenuHelper
   def render_menu(dynamic_menu, *args)
-    raise 'No DynamicMenu or Item Object' unless dynamic_menu.instance_of?(DynamicMenu)
+    raise 'No DynamicMenu or Item Object' unless dynamic_menu.instance_of?(ActionController::Base::DynamicMenu)
     options = args.last.is_a?(Hash) ? args.last : {}
     model = options[:model] || [:ul, :li]
 
