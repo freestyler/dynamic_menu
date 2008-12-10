@@ -8,7 +8,7 @@ module DynamicMenu
 
     def [](attribute); instance_variable_get("@#{attribute}".to_sym); end
     def []=(attribute, value); instance_variable_set("@#{attribute}".to_sym, value); end
-    
+
     def self_or_inherited_attribute(attribute)
       attribute = attribute.to_sym
       self[attribute] or (self[:parent] and self[:parent].self_or_inherited_attribute(attribute)) or nil
@@ -115,28 +115,32 @@ module DynamicMenu
       @auto_active        = (_controller and (options.delete(:auto_active) || true)) or nil
       @html_options       = {}
 
-      @enabled            = if enabled = options.delete(:enabled)
-                              enabled if enabled.is_a?(TrueClass) or enabled.is_a?(FalseClass)
-                              get_property(enabled) if enabled.is_a?(Hash) or enabled.is_a?(Array)
+      options.each { |key, value| self[key.to_sym] = value }
+
+      yield(self) if block_given?
+
+      @enabled            = if (enabled = options.delete(:enabled)) and (enabled == true or enabled == false)
+                              enabled
+                            elsif enabled.is_a?(Hash) or enabled.is_a?(Array)
+                              get_property(enabled)
                             else
                               true
                             end
 
-      @active            =  if active = options.delete(:active)
-                              active if active.is_a?(TrueClass) or active.is_a?(FalseClass)
-                              get_property(active) if active.is_a?(Hash) or active.is_a?(Array)
-                            else
-                              false
-                            end
+      @active             =  if (active = options.delete(:active)) and (active == true or active == false)
+                                active
+                             elsif active.is_a?(Hash) or active.is_a?(Array)
+                                get_property(active)
+                             else
+                                current_page? or !(@items.select {|i| i.active?}).empty?
+                             end
 
-      @active            = true if not active and parents.collect(&:auto_active).compact.include?(true) and current_page?
-
-      options.each { |key, value| self[key.to_sym] = value }
+      @active             = true if not @active and parents.collect(&:auto_active).compact.include?(true) and current_page?
 
       if @active
         self[:html_options][:class].blank? ? (self[:html_options][:class] = (@active_class || 'active')) : (self[:html_options][:class] += ' ' + (@active_class || 'active'))
       end
-      yield(self) if block_given?
+
     end
 
   end
