@@ -7,7 +7,6 @@ module DynamicMenu
     attr_reader :auto_active
 
     def [](attribute); instance_variable_get("@#{attribute}".to_sym); end
-
     def []=(attribute, value); instance_variable_set("@#{attribute}".to_sym, value); end
     
     def self_or_inherited_attribute(attribute)
@@ -30,11 +29,8 @@ module DynamicMenu
     end
 
     def enabled?; @enabled; end
-
     def active?; @active; end
-
     def active_item; self.items.find { |item| item.active? }; end
-
     def position; self[:parent].items.index(self); end
 
     def next
@@ -48,6 +44,8 @@ module DynamicMenu
     end
 
     alias :prev :previous
+
+    protected
 
     def controller
       self_or_inherited_attribute(:controller)
@@ -63,9 +61,6 @@ module DynamicMenu
         url_string == request.request_uri
       end
     end
-
-
-    protected
 
     def get_property(property)
       result_ary  = []
@@ -136,9 +131,7 @@ module DynamicMenu
 
       @active            = true if not active and parents.collect(&:auto_active).compact.include?(true) and current_page?
 
-      options.each do |key, value|
-        self[key.to_sym] = value
-      end
+      options.each { |key, value| self[key.to_sym] = value }
 
       if @active
         self[:html_options][:class].blank? ? (self[:html_options][:class] = (@active_class || 'active')) : (self[:html_options][:class] += ' ' + (@active_class || 'active'))
