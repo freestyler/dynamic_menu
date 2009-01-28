@@ -28,7 +28,6 @@ module DynamicMenu
       i
     end
 
-    def enabled?; @enabled; end
     def active?; @active; end
     def active_item; self.items.find { |item| item.active? }; end
     def position; self[:parent].items.index(self); end
@@ -51,50 +50,20 @@ module DynamicMenu
       self_or_inherited_attribute(:controller)
     end
 
-    def current_page?
-      return false if self.target == nil
-      url_string = CGI.escapeHTML(self.target)
+    def current_page?(target, method)
+      return false if target == nil or method == nil
+      url_string = CGI.escapeHTML(target)
       request = controller.request
       if url_string =~ /^\w+:\/\//
-        url_string == "#{request.protocol}#{request.host_with_port}#{request.request_uri}"
+        url_string == "#{request.protocol}#{request.host_with_port}#{request.request_uri}" and method.to_s == request.request_method.to_s
       else
-        url_string == request.request_uri
+        url_string == request.request_uri and method.to_s == request.request_method.to_s
       end
-    end
-
-    def get_property(property)
-      result_ary  = []
-      temp_ary    = []
-      if property.is_a?(Hash)
-        result_ary << property_helper(property)
-      elsif property.is_a?(Array)
-        property.each do |property_item|
-          if property_item.is_a?(Hash)
-            result_ary << property_helper(property_item)
-          end
-        end
-      end
-      result_ary.include?(true)
     end
 
     def parents; ([] << self[:parent] << (self[:parent] ? self[:parent].parents : nil)).flatten.compact; end
 
     def self_with_parents; [self, self.parents].flatten.compact; end
-
-    private
-
-    def property_helper(property)
-      raise 'No hash argument' unless property.is_a?(Hash)
-      temp_ary = []
-      property.each do |key, value|
-        temp_ary << if value.is_a?(Array)
-                      value.map {|v| self.self_with_parents.map { |item| item[key.to_sym].to_s == v.to_s } }.flatten.compact.include?(true)
-        else
-          self.self_with_parents.map { |item| item[key.to_sym].to_s == value.to_s }.include?(true)
-        end
-      end
-      !temp_ary.include?(false)
-    end
 
   end
 
@@ -112,6 +81,9 @@ module DynamicMenu
       @items              = []
       @name               = options.delete(:name)         || args[0]
       @target             = options.delete(:target)       || args[1]
+      @targets            = options.delete(:targets)      || [args[2]].flatten
+      @active             = options.delete(:active)
+      
       @auto_active        = (_controller and (options.delete(:auto_active) || true)) or nil
       @html_options       = {}
 
@@ -119,23 +91,16 @@ module DynamicMenu
 
       yield(self) if block_given?
 
-      @enabled            = if (enabled = options.delete(:enabled)) and (enabled == true or enabled == false)
-                              enabled
-                            elsif enabled.is_a?(Hash) or enabled.is_a?(Array)
-                              get_property(enabled)
-                            else
-                              true
-                            end
-
-      @active             =  if (active = options.delete(:active)) and (active == true or active == false)
-                                active
-                             elsif active.is_a?(Hash) or active.is_a?(Array)
-                                get_property(active)
-                             else
-                                current_page? or !(@items.select {|i| i.active?}).empty?
-                             end
-
-      @active             = true if not @active and parents.collect(&:auto_active).compact.include?(true) and current_page?
+      @active = @active || [[@target] + @targets].flatten.compact.map { |target|
+                    if target.is_a?(String)
+                      url     = target
+                      method  = :get
+                    elsif target.is_a?(Hash)
+                      url     = target[:url]
+                      method  = target[:method] || :get
+                    end
+                    current_page?(url, method)
+                  }.include?(true)
 
       if @active
         self[:html_options][:class].blank? ? (self[:html_options][:class] = (@active_class || 'active')) : (self[:html_options][:class] += ' ' + (@active_class || 'active'))
