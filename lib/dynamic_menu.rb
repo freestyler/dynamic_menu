@@ -55,9 +55,9 @@ module DynamicMenu
       url_string = CGI.escapeHTML(target)
       request = controller.request
       if url_string =~ /^\w+:\/\//
-        url_string == "#{request.protocol}#{request.host_with_port}#{request.request_uri}" and method.to_s == request.request_method.to_s
+        url_string == "#{request.protocol}#{request.host_with_port}#{request.request_uri}".gsub('&', '&amp;') and method.to_s == request.request_method.to_s
       else
-        url_string == request.request_uri and method.to_s == request.request_method.to_s
+        url_string == request.request_uri.gsub('&', '&amp;') and method.to_s == request.request_method.to_s
       end
     end
 
