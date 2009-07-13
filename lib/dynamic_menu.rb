@@ -4,7 +4,6 @@ module DynamicMenu
     attr_reader :name
     attr_reader :items
     attr_reader :target
-    attr_reader :auto_active
 
     def [](attribute); instance_variable_get("@#{attribute}".to_sym); end
     def []=(attribute, value); instance_variable_set("@#{attribute}".to_sym, value); end
@@ -46,19 +45,16 @@ module DynamicMenu
 
     protected
 
-    def controller
-      self_or_inherited_attribute(:controller)
+    def url
+      self_or_inherited_attribute(:url)
     end
 
-    def current_page?(target, method)
-      return false if target == nil or method == nil
-      url_string = CGI.escapeHTML(target)
-      request = controller.request
-      if url_string =~ /^\w+:\/\//
-        url_string == "#{request.protocol}#{request.host_with_port}#{request.request_uri}".gsub('&', '&amp;') and method.to_s == request.request_method.to_s
-      else
-        url_string == request.request_uri.gsub('&', '&amp;') and method.to_s == request.request_method.to_s
-      end
+    def method
+      self_or_inherited_attribute(:method)
+    end
+
+    def current_page?(_target, _method)
+      url.match(_target.is_a?(String) ? Regexp.new(_target + '$') : Regexp.new(_target.source + '$')) and method == _method.to_s
     end
 
     def parents; ([] << self[:parent] << (self[:parent] ? self[:parent].parents : nil)).flatten.compact; end
@@ -72,19 +68,21 @@ module DynamicMenu
     def initialize(*args, &block)
 
       _parent     = args[0].is_a?(DynamicMenu) ? args.delete_at(0) : nil
-      _controller = args[0].is_a?(ActionController::Base) ? args.delete_at(0) : nil
+      if kontroller = (args[0].is_a?(ActionController::Base) ? args.delete_at(0) : nil)
+        request = kontroller.request
+        @url = "#{request.protocol}#{request.host_with_port}#{request.request_uri}"
+        @method = request.request_method.to_s
+      end
 
       options = args.last.is_a?(Hash) ? args.pop : {}
 
       @parent             = _parent
-      @controller         = _controller
       @items              = []
       @name               = options.delete(:name)         || args[0]
       @target             = options.delete(:target)       || args[1]
       @targets            = options.delete(:targets)      || [args[2]].flatten
       @active             = options.delete(:active)
       
-      @auto_active        = (_controller and (options.delete(:auto_active) || true)) or nil
       @html_options       = {}
 
       options.each { |key, value| self[key.to_sym] = value }
@@ -92,7 +90,7 @@ module DynamicMenu
       yield(self) if block_given?
 
       @active = @active || [[@target] + @targets].flatten.compact.map { |target|
-                    if target.is_a?(String)
+                    if target.is_a?(String) or target.is_a?(Regexp)
                       url     = target
                       method  = :get
                     elsif target.is_a?(Hash)
