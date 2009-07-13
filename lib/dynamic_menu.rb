@@ -37,11 +37,11 @@ module DynamicMenu
     protected
 
     def url
-      self[:url]
+      self_or_inherited_attribute(:url)
     end
 
     def method
-      self[:method]
+      self_or_inherited_attribute(:method)
     end
 
     def current_page?(_target, _method)
@@ -68,8 +68,7 @@ module DynamicMenu
       @name               = options.delete(:name)         || args[0]
       @target             = options.delete(:target)       || args[1]
       @targets            = options.delete(:targets)      || [args[2]].flatten
-      @active             = options.delete(:active)       || false
-      @active_class       = options.delete(:active_class) || 'active'
+      @active             = options.delete(:active)
       
       @html_options       = {}
 
@@ -89,9 +88,7 @@ module DynamicMenu
                   }.include?(true)
 
       if @active
-        self[:html_options][:class].blank? ? 
-          (self[:html_options][:class] = @active_class) : 
-          (self[:html_options][:class] += ' ' + @active_class)
+        self[:html_options][:class].blank? ? (self[:html_options][:class] = (@active_class || 'active')) : (self[:html_options][:class] += ' ' + (@active_class || 'active'))
       end
 
     end
