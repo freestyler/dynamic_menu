@@ -63,7 +63,7 @@ module DynamicMenu
       @name               = options.delete(:name)         || args[0]
       @target             = options.delete(:target)       || args[1]
       @targets            = options.delete(:targets)      || [args[2]].flatten
-      
+
       @html_options       = {}
 
       options.each { |key, value| self[key.to_sym] = value }
@@ -71,20 +71,20 @@ module DynamicMenu
       yield(self) if block_given?
 
       self[:active] = self[:active] || [[@target] + @targets].flatten.compact.map { |target|
-                    if target.is_a?(String) or target.is_a?(Regexp)
-                      url     = target
-                      method  = :get
-                    elsif target.is_a?(Hash)
-                      url     = target[:url]
-                      method  = target[:method] || :get
-                    end
-                    current_page?(url, method)
-                  }.include?(true)
+        if target.is_a?(String) or target.is_a?(Regexp)
+          url     = target
+          method  = :get
+        elsif target.is_a?(Hash)
+          url     = target[:url]
+          method  = target[:method] || :get
+        end
+        current_page?(url, method)
+      }.include?(true)
 
       if self[:active]
         self[:html_options][:class].blank? ? 
           (self[:html_options][:class] = (self[:active_class] or 'active')) : 
-          (self[:html_options][:class] += ' ' + (self[:active_class] or 'active')
+          (self[:html_options][:class] += ' ' + (self[:active_class] or 'active'))
       end
 
     end
