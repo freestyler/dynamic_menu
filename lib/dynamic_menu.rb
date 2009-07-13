@@ -8,23 +8,9 @@ module DynamicMenu
     def [](attribute); instance_variable_get("@#{attribute}".to_sym); end
     def []=(attribute, value); instance_variable_set("@#{attribute}".to_sym, value); end
 
-    def self_or_inherited_attribute(attribute)
-      attribute = attribute.to_sym
-      self[attribute] or (self[:parent] and self[:parent].self_or_inherited_attribute(attribute)) or nil
-    end
-
     def add(*args, &block)
       item = DynamicMenu.new(self, *args, &block)
       @items.push item
-    end
-
-    def level
-      i = 1
-      s_p = self.parent
-      while s_p = s_p.parent
-        i += 1
-      end
-      i
     end
 
     def active?; @active; end
@@ -46,20 +32,16 @@ module DynamicMenu
     protected
 
     def url
-      self_or_inherited_attribute(:url)
+      self[:url]
     end
 
     def method
-      self_or_inherited_attribute(:method)
+      self[:method]
     end
 
     def current_page?(_target, _method)
       url.match(_target.is_a?(String) ? Regexp.new(_target + '$') : Regexp.new(_target.source + '$')) and method == _method.to_s
     end
-
-    def parents; ([] << self[:parent] << (self[:parent] ? self[:parent].parents : nil)).flatten.compact; end
-
-    def self_with_parents; [self, self.parents].flatten.compact; end
 
   end
 
@@ -81,7 +63,6 @@ module DynamicMenu
       @name               = options.delete(:name)         || args[0]
       @target             = options.delete(:target)       || args[1]
       @targets            = options.delete(:targets)      || [args[2]].flatten
-      @active             = options.delete(:active)
       
       @html_options       = {}
 
@@ -89,7 +70,7 @@ module DynamicMenu
 
       yield(self) if block_given?
 
-      @active = @active || [[@target] + @targets].flatten.compact.map { |target|
+      self[:active] = self[:active] || [[@target] + @targets].flatten.compact.map { |target|
                     if target.is_a?(String) or target.is_a?(Regexp)
                       url     = target
                       method  = :get
@@ -100,8 +81,10 @@ module DynamicMenu
                     current_page?(url, method)
                   }.include?(true)
 
-      if @active
-        self[:html_options][:class].blank? ? (self[:html_options][:class] = (@active_class || 'active')) : (self[:html_options][:class] += ' ' + (@active_class || 'active'))
+      if self[:active]
+        self[:html_options][:class].blank? ? 
+          (self[:html_options][:class] = (self[:active_class] or 'active')) : 
+          (self[:html_options][:class] += ' ' + (self[:active_class] or 'active')
       end
 
     end
