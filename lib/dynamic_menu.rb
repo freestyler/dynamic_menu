@@ -18,15 +18,6 @@ module DynamicMenu
       @items.push item
     end
 
-    def level
-      i = 1
-      s_p = self.parent
-      while s_p = s_p.parent
-        i += 1
-      end
-      i
-    end
-
     def active?; @active; end
     def active_item; self.items.find { |item| item.active? }; end
     def position; self[:parent].items.index(self); end
@@ -46,20 +37,16 @@ module DynamicMenu
     protected
 
     def url
-      self_or_inherited_attribute(:url)
+      self[:url]
     end
 
     def method
-      self_or_inherited_attribute(:method)
+      self[:method]
     end
 
     def current_page?(_target, _method)
       url.match(_target.is_a?(String) ? Regexp.new(_target + '$') : Regexp.new(_target.source + '$')) and method == _method.to_s
     end
-
-    def parents; ([] << self[:parent] << (self[:parent] ? self[:parent].parents : nil)).flatten.compact; end
-
-    def self_with_parents; [self, self.parents].flatten.compact; end
 
   end
 
@@ -81,7 +68,8 @@ module DynamicMenu
       @name               = options.delete(:name)         || args[0]
       @target             = options.delete(:target)       || args[1]
       @targets            = options.delete(:targets)      || [args[2]].flatten
-      @active             = options.delete(:active)
+      @active             = options.delete(:active)       || false
+      @active_class       = options.delete(:active_class) || 'active'
       
       @html_options       = {}
 
@@ -101,7 +89,9 @@ module DynamicMenu
                   }.include?(true)
 
       if @active
-        self[:html_options][:class].blank? ? (self[:html_options][:class] = (@active_class || 'active')) : (self[:html_options][:class] += ' ' + (@active_class || 'active'))
+        self[:html_options][:class].blank? ? 
+          (self[:html_options][:class] = @active_class) : 
+          (self[:html_options][:class] += ' ' + @active_class)
       end
 
     end
