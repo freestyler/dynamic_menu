@@ -45,7 +45,7 @@ module DynamicMenu
     end
 
     def current_page?(_target, _method)
-      !url.match(_target.is_a?(String) ? Regexp.new(_target.gsub('?', '\?').gsub('+', "\\\\+") + '$') + '$') : Regexp.new(_target.source + '$')) and method == _method.to_s
+      !url.match(_target.is_a?(String) ? Regexp.new(_target.gsub('?', '\?').gsub('+', "\\\\+") + '$') : Regexp.new(_target.source + '$')) and method == _method.to_s
     end
 
   end
